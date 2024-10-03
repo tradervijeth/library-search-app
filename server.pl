@@ -4,6 +4,11 @@ use warnings;
 use HTTP::Server::Simple::CGI;
 use base qw(HTTP::Server::Simple::CGI);
 use File::Slurp;
+use Cwd qw(abs_path);
+use File::Basename qw(dirname);
+
+# Add the current directory to @INC
+use lib dirname(abs_path($0));
 
 my %dispatch = (
     '/' => \&respond_root,
@@ -37,7 +42,19 @@ sub respond_root {
 
 sub respond_search {
     my $cgi = shift;
-    do 'search.pl';
+    
+    # Capture and forward all CGI parameters
+    my $query_string = $cgi->query_string;
+    
+    # Set environment variables for the script
+    $ENV{QUERY_STRING} = $query_string;
+    $ENV{REQUEST_METHOD} = 'GET';
+    
+    # Execute the search.pl script and capture its output
+    my $output = `perl search.pl`;
+    
+    # Print the output
+    print $output;
 }
 
 my $port = 8080;
